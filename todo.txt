@@ -1,0 +1,9 @@
+- images for pieces
+- github action for building to all platforms
+- available moves
+- play through user input
+- taking pieces
+- check
+- checkmate
+- bot with random moves
+- bot vs bot
