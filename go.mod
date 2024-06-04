@@ -2,7 +2,10 @@ module github.com/Brokkolii/chess-game-v2
 
 go 1.22.2
 
-require github.com/hajimehoshi/ebiten/v2 v2.7.4
+require (
+	github.com/hajimehoshi/ebiten/v2 v2.7.4
+	golang.org/x/image v0.16.0
+)
 
 require (
 	github.com/ebitengine/gomobile v0.0.0-20240518074828-e86332849895 // indirect

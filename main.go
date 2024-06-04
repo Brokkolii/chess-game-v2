@@ -3,28 +3,39 @@ package main
 import (
 	"log"
 
+	"github.com/Brokkolii/chess-game-v2/board"
+	"github.com/Brokkolii/chess-game-v2/game"
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 )
 
-type Game struct{}
+type Game struct {
+	State      *game.GameState
+	BoardImage *ebiten.Image
+}
 
 func (g *Game) Update() error {
 	return nil
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
-	ebitenutil.DebugPrint(screen, "Hello, World!")
+	screen.DrawImage(board.DrawBoard(640, 640, g.State.Board), nil)
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
-	return 320, 240
+	return 640, 640
+}
+
+func NewGame() *Game {
+	return &Game{
+		State: game.NewGameState(),
+	}
 }
 
 func main() {
-	ebiten.SetWindowSize(640, 480)
-	ebiten.SetWindowTitle("Hello, World!")
-	if err := ebiten.RunGame(&Game{}); err != nil {
+	ebiten.SetWindowSize(640, 640)
+	ebiten.SetWindowTitle("Chess Game V2")
+	game := NewGame()
+	if err := ebiten.RunGame(game); err != nil {
 		log.Fatal(err)
 	}
 }
