@@ -6,19 +6,42 @@ import (
 	"github.com/Brokkolii/chess-game-v2/board"
 	"github.com/Brokkolii/chess-game-v2/game"
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/inpututil"
 )
 
 type Game struct {
 	State      *game.GameState
 	BoardImage *ebiten.Image
+	Dragging   *board.Piece
 }
 
 func (g *Game) Update() error {
+	mx, my := ebiten.CursorPosition()
+	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
+		if g.Dragging == nil {
+			clickedPiece := g.State.Board.PieceAt(mx, my)
+			if clickedPiece != nil {
+				g.Dragging = clickedPiece
+			}
+		}
+	}
+	if inpututil.IsMouseButtonJustReleased(ebiten.MouseButtonLeft) {
+		if g.Dragging != nil {
+			row, col := g.State.Board.SquareAt(mx, my)
+			g.State.Board.MovePiece(g.Dragging.Row, g.Dragging.Col, row, col)
+			g.Dragging = nil
+		}
+	}
+	if g.Dragging != nil {
+		g.Dragging.X = mx - board.GetSquareSize()/2
+		g.Dragging.Y = my - board.GetSquareSize()/2
+	}
 	return nil
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
-	screen.DrawImage(board.DrawBoard(640, 640, g.State.Board), nil)
+	screen.DrawImage(g.BoardImage, nil)
+	board.DrawPieces(screen, g.State.Board)
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
@@ -27,7 +50,8 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeigh
 
 func NewGame() *Game {
 	return &Game{
-		State: game.NewGameState(),
+		State:      game.NewGameState(),
+		BoardImage: board.DrawBoard(640, 640),
 	}
 }
 
