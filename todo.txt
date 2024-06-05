@@ -1,5 +1,7 @@
-- images for pieces
-- github action for building to all platforms
+x images for pieces
+x github action for building to all platforms
+x move pieces
+- BUG: releasing pieces outside of window => crash
 - available moves
 - play through user input
 - taking pieces
