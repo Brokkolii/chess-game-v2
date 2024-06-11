@@ -1,10 +1,8 @@
 package board
 
 import (
-	"log"
-
+	"github.com/Brokkolii/chess-game-v2/assets"
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 )
 
 type Piece struct {
@@ -16,10 +14,7 @@ type Piece struct {
 }
 
 func NewPiece(pieceColor string, pieceType string, row int, col int) *Piece {
-	img, _, err := ebitenutil.NewImageFromFile("assets/" + pieceColor + "_" + pieceType + ".png")
-	if err != nil {
-		log.Fatal(err)
-	}
+	img := assets.LoadImageFromAssets(pieceColor + "_" + pieceType + ".png")
 	return &Piece{
 		Color:     pieceColor,
 		Type:      pieceType,
