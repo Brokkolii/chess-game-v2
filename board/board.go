@@ -1,113 +1,134 @@
 package board
 
 import (
-	"image/color"
-
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
-type Board [size][size]*Piece
+type Board struct {
+	Fields [size][size]*Field
+	Image  *ebiten.Image
+}
 
 const (
 	size       = 8
 	squareSize = 80
 )
 
-var (
-	lightColor = color.RGBA{173, 189, 143, 0}
-	darkColor  = color.RGBA{111, 143, 114, 0}
-)
-
-func DrawBoard(w int, h int) *ebiten.Image {
-	var boardImage = ebiten.NewImage(w, h)
-	for row := 0; row < size; row++ {
-		y := (size - 1 - row) * squareSize
-		for col := 0; col < size; col++ {
-			x := col * squareSize
-			altColor := (row+col)%2 == 0
-			drawSquare(boardImage, x, y, altColor)
-		}
-	}
-	return boardImage
-}
-
-func drawSquare(screen *ebiten.Image, x int, y int, altColor bool) {
-	s := ebiten.NewImage(squareSize, squareSize)
-	if !altColor {
-		s.Fill(lightColor)
-	} else {
-		s.Fill(darkColor)
-	}
-	op := ebiten.DrawImageOptions{}
-	op.GeoM.Translate(float64(x), float64(y))
-	screen.DrawImage(s, &op)
-}
-func NewBoard() *Board {
-	fen := "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
-	board := fenToBoard(fen)
-	return board
-}
-
-func fenToBoard(fen string) *Board {
-	var board Board
-	row := 7
-	col := 0
-	for _, char := range fen {
-		switch char {
-		case 'r':
-			board[row][col] = NewPiece("black", "rook", row, col)
-			col++
-		case 'n':
-			board[row][col] = NewPiece("black", "knight", row, col)
-			col++
-		case 'b':
-			board[row][col] = NewPiece("black", "bishop", row, col)
-			col++
-		case 'q':
-			board[row][col] = NewPiece("black", "queen", row, col)
-			col++
-		case 'k':
-			board[row][col] = NewPiece("black", "king", row, col)
-			col++
-		case 'p':
-			board[row][col] = NewPiece("black", "pawn", row, col)
-			col++
-		case 'R':
-			board[row][col] = NewPiece("white", "rook", row, col)
-			col++
-		case 'N':
-			board[row][col] = NewPiece("white", "knight", row, col)
-			col++
-		case 'B':
-			board[row][col] = NewPiece("white", "bishop", row, col)
-			col++
-		case 'Q':
-			board[row][col] = NewPiece("white", "queen", row, col)
-			col++
-		case 'K':
-			board[row][col] = NewPiece("white", "king", row, col)
-			col++
-		case 'P':
-			board[row][col] = NewPiece("white", "pawn", row, col)
-			col++
-		case '/':
-			row--
-			col = 0
-		case ' ':
-			return &board
-		default:
-			if char >= '1' && char <= '8' {
-				col += int(char - '0')
+func (b *Board) Draw(dst *ebiten.Image) {
+	if b.Image == nil {
+		b.Image = ebiten.NewImage(squareSize*size, squareSize*size)
+		for i, row := range b.Fields {
+			for j := range row {
+				field := b.FieldAt(i+1, j+1)
+				if field != nil {
+					field.draw(b.Image)
+				}
 			}
 		}
 	}
+	dst.DrawImage(b.Image, nil)
+}
+
+func (b *Board) DrawPieces(dst *ebiten.Image) {
+	for _, piece := range b.Pieces() {
+		piece.Draw(dst)
+	}
+}
+
+func NewBoard() *Board {
+	var board Board
+	fen := "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+	board.fromFEN(fen)
 	return &board
+}
+
+func (b *Board) fromFEN(fen string) {
+	row := 8
+	col := 1
+	for _, char := range fen {
+		switch char {
+		case 'r':
+			piece := NewPiece("black", "rook", row, col)
+			field := NewFieldWithPiece(row, col, piece)
+			b.AddField(field)
+			col++
+		case 'n':
+			piece := NewPiece("black", "knight", row, col)
+			field := NewFieldWithPiece(row, col, piece)
+			b.AddField(field)
+			col++
+		case 'b':
+			piece := NewPiece("black", "bishop", row, col)
+			field := NewFieldWithPiece(row, col, piece)
+			b.AddField(field)
+			col++
+		case 'q':
+			piece := NewPiece("black", "queen", row, col)
+			field := NewFieldWithPiece(row, col, piece)
+			b.AddField(field)
+			col++
+		case 'k':
+			piece := NewPiece("black", "king", row, col)
+			field := NewFieldWithPiece(row, col, piece)
+			b.AddField(field)
+			col++
+		case 'p':
+			piece := NewPiece("black", "pawn", row, col)
+			field := NewFieldWithPiece(row, col, piece)
+			b.AddField(field)
+			col++
+		case 'R':
+			piece := NewPiece("white", "rook", row, col)
+			field := NewFieldWithPiece(row, col, piece)
+			b.AddField(field)
+			col++
+		case 'N':
+			piece := NewPiece("white", "knight", row, col)
+			field := NewFieldWithPiece(row, col, piece)
+			b.AddField(field)
+			col++
+		case 'B':
+			piece := NewPiece("white", "bishop", row, col)
+			field := NewFieldWithPiece(row, col, piece)
+			b.AddField(field)
+			col++
+		case 'Q':
+			piece := NewPiece("white", "queen", row, col)
+			field := NewFieldWithPiece(row, col, piece)
+			b.AddField(field)
+			col++
+		case 'K':
+			piece := NewPiece("white", "king", row, col)
+			field := NewFieldWithPiece(row, col, piece)
+			b.AddField(field)
+			col++
+		case 'P':
+			piece := NewPiece("white", "pawn", row, col)
+			field := NewFieldWithPiece(row, col, piece)
+			b.AddField(field)
+			col++
+		case '/':
+			row--
+			col = 1
+		case ' ':
+			return
+		default:
+			if char >= '1' && char <= '8' {
+				for i := 1; i <= int(char-'0'); i++ {
+					field := NewField(row, col)
+					b.AddField(field)
+					col++
+				}
+			}
+		}
+	}
 }
 
 func (b *Board) Pieces() []*Piece {
 	var pieces []*Piece
-	for _, row := range b {
-		for _, piece := range row {
+	for _, row := range b.Fields {
+		for _, field := range row {
+			piece := field.Piece
 			if piece != nil {
 				pieces = append(pieces, piece)
 			}
@@ -116,31 +137,34 @@ func (b *Board) Pieces() []*Piece {
 	return pieces
 }
 
-func (b *Board) PieceAt(x int, y int) *Piece {
+func (b *Board) PieceAtCoords(x int, y int) *Piece {
 	for _, piece := range b.Pieces() {
-		if x-piece.X <= squareSize && y-piece.Y <= squareSize && x >= piece.X && y >= piece.Y {
+		left, top := piece.getCoords()
+		right := left + squareSize
+		bottom := top + squareSize
+		if y <= bottom && y >= top && x <= right && x >= left {
 			return piece
 		}
 	}
 	return nil
 }
 
-func (b *Board) SquareAt(x int, y int) (row int, col int) {
-	return size - 1 - (y / squareSize), x / squareSize
+func (b *Board) FieldAtCoords(x int, y int) *Field {
+	col := (x / squareSize) + 1
+	row := (size - 1 - (y / squareSize)) + 1
+	return b.FieldAt(row, col)
 }
 
-func (b *Board) MovePiece(fromRow int, fromCol int, toRow int, toCol int) {
-	b[toRow][toCol] = b[fromRow][fromCol]
-	if toRow != fromRow || toCol != fromCol {
-		b[fromRow][fromCol] = nil
-	}
-	piece := b[toRow][toCol]
-	piece.Row = toRow
-	piece.Col = toCol
-	piece.X = piece.Col * squareSize
-	piece.Y = (size * squareSize) - ((piece.Row + 1) * squareSize)
+func (b *Board) FieldAt(row int, col int) *Field {
+	return b.Fields[row-1][col-1]
 }
 
-func GetSquareSize() int {
-	return squareSize
+func (b *Board) AddField(field *Field) {
+	b.Fields[field.Row-1][field.Col-1] = field
+}
+
+func (b *Board) MovePiece(from *Field, to *Field) {
+	piece := from.Piece
+	from.removePiece()
+	to.addPiece(piece)
 }

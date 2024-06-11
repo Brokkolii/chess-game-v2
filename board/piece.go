@@ -8,47 +8,43 @@ import (
 )
 
 type Piece struct {
-	Color string
-	Type  string
-	Image ebiten.Image
-	X     int
-	Y     int
-	Row   int
-	Col   int
+	Color     string
+	Type      string
+	Image     ebiten.Image
+	Field     *Field
+	IsDragged bool
 }
 
-func NewPiece(color string, pieceType string, row int, col int) *Piece {
-	img, _, err := ebitenutil.NewImageFromFile("assets/" + color + "_" + pieceType + ".png")
+func NewPiece(pieceColor string, pieceType string, row int, col int) *Piece {
+	img, _, err := ebitenutil.NewImageFromFile("assets/" + pieceColor + "_" + pieceType + ".png")
 	if err != nil {
 		log.Fatal(err)
 	}
 	return &Piece{
-		Color: color,
-		Type:  pieceType,
-		Image: *img,
-		X:     col * squareSize,
-		Y:     (size * squareSize) - ((row + 1) * squareSize),
-		Row:   row,
-		Col:   col,
+		Color:     pieceColor,
+		Type:      pieceType,
+		Image:     *img,
+		IsDragged: false,
 	}
 }
 
-func DrawPieces(screen *ebiten.Image, board *Board) {
-	for row := 0; row < size; row++ {
-		for col := 0; col < size; col++ {
-			piece := board[row][col]
-			if piece != nil {
-				drawPiece(board[row][col], screen)
-			}
-		}
-	}
-}
-
-func drawPiece(piece *Piece, dst *ebiten.Image) {
-	iw := float64(piece.Image.Bounds().Dx())
-	ih := float64(piece.Image.Bounds().Dy())
+func (p *Piece) Draw(dst *ebiten.Image) {
+	iw := float64(p.Image.Bounds().Dx())
+	ih := float64(p.Image.Bounds().Dy())
+	x, y := p.getCoords()
 	op := ebiten.DrawImageOptions{}
 	op.GeoM.Scale(squareSize/float64(iw), squareSize/float64(ih))
-	op.GeoM.Translate(float64(piece.X), float64(piece.Y))
-	dst.DrawImage(&piece.Image, &op)
+	op.GeoM.Translate(float64(x), float64(y))
+	dst.DrawImage(&p.Image, &op)
+}
+
+func (p *Piece) getCoords() (x int, y int) {
+	if p.IsDragged {
+		x, y = ebiten.CursorPosition()
+		x = x - (squareSize / 2)
+		y = y - (squareSize / 2)
+		return x, y
+	} else {
+		return p.Field.getCoords()
+	}
 }
