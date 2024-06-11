@@ -8,11 +8,6 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-
-    strategy:
-      matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -20,26 +15,17 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v2
         with:
-          go-version: '1.18'  # Set your Go version
+          go-version: '1.22.2'  # Set your Go version
 
-      - name: Build for ${{ matrix.os }}
+      - name: Build for Windows
         run: |
-          if [[ $RUNNER_OS == 'Windows' ]]; then
-            GOOS=windows GOARCH=amd64 go build -o myapp.exe
-          elif [[ $RUNNER_OS == 'macOS' ]]; then
-            GOOS=darwin GOARCH=amd64 go build -o myapp-mac
-          else
-            GOOS=linux GOARCH=amd64 go build -o myapp-linux
-          fi
+            GOOS=windows GOARCH=amd64 go build -o chess-game-v2.exe
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v2
         with:
-          name: myapp-${{ matrix.os }}
-          path: |
-            myapp.exe
-            myapp-mac
-            myapp-linux
+          name: chess-game-v2-windows
+          path: chess-game-v2.exe
 
   release:
     needs: build
@@ -52,7 +38,7 @@ jobs:
       - name: Download build artifacts
         uses: actions/download-artifact@v2
         with:
-          name: myapp-${{ matrix.os }}
+          name: chess-game-v2-windows
           path: ./artifacts
 
       - name: Set release version
@@ -71,34 +57,11 @@ jobs:
           prerelease: false
 
       - name: Upload Release Asset Windows
-        if: ${{ matrix.os == 'windows-latest' }}
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./artifacts/myapp.exe
-          asset_name: myapp.exe
-          asset_content_type: application/octet-stream
-
-      - name: Upload Release Asset macOS
-        if: ${{ matrix.os == 'macos-latest' }}
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./artifacts/myapp-mac
-          asset_name: myapp-mac
-          asset_content_type: application/octet-stream
-
-      - name: Upload Release Asset Linux
-        if: ${{ matrix.os == 'ubuntu-latest' }}
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./artifacts/myapp-linux
-          asset_name: myapp-linux
+          asset_path: ./artifacts/chess-game-v2.exe
+          asset_name: chess-game-v2.exe
           asset_content_type: application/octet-stream
