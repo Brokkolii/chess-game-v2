@@ -10,38 +10,36 @@ import (
 )
 
 type Game struct {
-	State      *game.GameState
-	BoardImage *ebiten.Image
-	Dragging   *board.Piece
+	State         *game.GameState
+	DraggingPiece *board.Piece
 }
 
 func (g *Game) Update() error {
 	mx, my := ebiten.CursorPosition()
 	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
-		if g.Dragging == nil {
-			clickedPiece := g.State.Board.PieceAt(mx, my)
+		if g.DraggingPiece == nil {
+			clickedPiece := g.State.Board.PieceAtCoords(mx, my)
 			if clickedPiece != nil {
-				g.Dragging = clickedPiece
+				clickedPiece.IsDragged = true
+				g.DraggingPiece = clickedPiece
 			}
 		}
 	}
 	if inpututil.IsMouseButtonJustReleased(ebiten.MouseButtonLeft) {
-		if g.Dragging != nil {
-			row, col := g.State.Board.SquareAt(mx, my)
-			g.State.Board.MovePiece(g.Dragging.Row, g.Dragging.Col, row, col)
-			g.Dragging = nil
+		if g.DraggingPiece != nil {
+			field := g.State.Board.FieldAtCoords(mx, my)
+			// TODO: check if valid move
+			g.State.Board.MovePiece(g.DraggingPiece.Field, field)
+			g.DraggingPiece.IsDragged = false
+			g.DraggingPiece = nil
 		}
-	}
-	if g.Dragging != nil {
-		g.Dragging.X = mx - board.GetSquareSize()/2
-		g.Dragging.Y = my - board.GetSquareSize()/2
 	}
 	return nil
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
-	screen.DrawImage(g.BoardImage, nil)
-	board.DrawPieces(screen, g.State.Board)
+	g.State.Board.Draw(screen)
+	g.State.Board.DrawPieces(screen)
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
@@ -50,8 +48,7 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeigh
 
 func NewGame() *Game {
 	return &Game{
-		State:      game.NewGameState(),
-		BoardImage: board.DrawBoard(640, 640),
+		State: game.NewGameState(),
 	}
 }
 
