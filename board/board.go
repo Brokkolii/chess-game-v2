@@ -152,10 +152,16 @@ func (b *Board) PieceAtCoords(x int, y int) *Piece {
 func (b *Board) FieldAtCoords(x int, y int) *Field {
 	col := (x / squareSize) + 1
 	row := (size - 1 - (y / squareSize)) + 1
+	if row > 8 || row < 1 || col > 8 || col < 1 || y < 0 || x < 0 {
+		return nil
+	}
 	return b.FieldAt(row, col)
 }
 
 func (b *Board) FieldAt(row int, col int) *Field {
+	if row > 8 || row < 1 || col > 8 || col < 1 {
+		return nil
+	}
 	return b.Fields[row-1][col-1]
 }
 

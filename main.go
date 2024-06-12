@@ -28,8 +28,10 @@ func (g *Game) Update() error {
 	if inpututil.IsMouseButtonJustReleased(ebiten.MouseButtonLeft) {
 		if g.DraggingPiece != nil {
 			field := g.State.Board.FieldAtCoords(mx, my)
-			// TODO: check if valid move
-			g.State.Board.MovePiece(g.DraggingPiece.Field, field)
+			if field != nil {
+				// TODO: check if valid move
+				g.State.Board.MovePiece(g.DraggingPiece.Field, field)
+			}
 			g.DraggingPiece.IsDragged = false
 			g.DraggingPiece = nil
 		}
