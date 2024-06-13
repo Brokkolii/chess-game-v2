@@ -35,6 +35,12 @@ func (b *Board) DrawPieces(dst *ebiten.Image) {
 	}
 }
 
+func (b *Board) DrawMoves(dst *ebiten.Image, moves []*Move) {
+	for _, move := range moves {
+		move.Draw(dst)
+	}
+}
+
 func NewBoard() *Board {
 	var board Board
 	fen := "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
@@ -169,8 +175,34 @@ func (b *Board) AddField(field *Field) {
 	b.Fields[field.Row-1][field.Col-1] = field
 }
 
-func (b *Board) MovePiece(from *Field, to *Field) {
-	piece := from.Piece
-	from.removePiece()
-	to.addPiece(piece)
+func (b *Board) ExecuteMove(move *Move) {
+	piece := move.From.Piece
+	move.From.removePiece()
+	move.To.addPiece(piece)
+}
+
+func (b *Board) MovesForPiece(piece *Piece) *AvailableMoves {
+	var moves []*Move
+	if piece.Type == "pawn" {
+		// TODO: check if Field is Empty
+		// TODO: check for Takes
+		// TODO: check for Starting square (2fields forward)
+		// TODO: check for aun pasante
+		if piece.Color == "white" {
+			row := piece.Field.Row + 1
+			col := piece.Field.Col
+			field := b.FieldAt(row, col)
+			move := NewMove(piece.Field, field)
+			moves = append(moves, move)
+		} else {
+			row := piece.Field.Row - 1
+			col := piece.Field.Col
+			field := b.FieldAt(row, col)
+			move := NewMove(piece.Field, field)
+			moves = append(moves, move)
+		}
+	}
+	return &AvailableMoves{
+		Moves: moves,
+	}
 }

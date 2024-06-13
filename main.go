@@ -10,8 +10,9 @@ import (
 )
 
 type Game struct {
-	State         *game.GameState
-	DraggingPiece *board.Piece
+	State          *game.GameState
+	DraggingPiece  *board.Piece
+	AvailableMoves *board.AvailableMoves
 }
 
 func (g *Game) Update() error {
@@ -22,6 +23,7 @@ func (g *Game) Update() error {
 			if clickedPiece != nil {
 				clickedPiece.IsDragged = true
 				g.DraggingPiece = clickedPiece
+				g.AvailableMoves = g.State.Board.MovesForPiece(clickedPiece)
 			}
 		}
 	}
@@ -30,10 +32,15 @@ func (g *Game) Update() error {
 			field := g.State.Board.FieldAtCoords(mx, my)
 			if field != nil {
 				// TODO: check if valid move
-				g.State.Board.MovePiece(g.DraggingPiece.Field, field)
+				isAvailable := g.AvailableMoves.FieldIsAvailable(field)
+				if isAvailable {
+					move := board.NewMove(g.DraggingPiece.Field, field)
+					g.State.Board.ExecuteMove(move)
+				}
 			}
 			g.DraggingPiece.IsDragged = false
 			g.DraggingPiece = nil
+			g.AvailableMoves = nil
 		}
 	}
 	return nil
@@ -42,6 +49,9 @@ func (g *Game) Update() error {
 func (g *Game) Draw(screen *ebiten.Image) {
 	g.State.Board.Draw(screen)
 	g.State.Board.DrawPieces(screen)
+	if g.AvailableMoves != nil {
+		g.State.Board.DrawMoves(screen, g.AvailableMoves.Moves)
+	}
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
