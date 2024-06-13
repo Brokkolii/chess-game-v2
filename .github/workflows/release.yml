@@ -19,17 +19,18 @@ jobs:
 
       - name: Build for Windows
         run: |
-          GOOS=windows GOARCH=amd64 go build -o chess-game-v2.exe
+            GOOS=windows GOARCH=amd64 go build -o chess-game-v2.exe
 
-      - name: Upload Windows build artifact
+      - name: Upload build artifact
         uses: actions/upload-artifact@v2
         with:
           name: chess-game-v2-windows
           path: chess-game-v2.exe
-          
+
   release:
     needs: build
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -37,6 +38,7 @@ jobs:
       - name: Download build artifacts
         uses: actions/download-artifact@v2
         with:
+          name: chess-game-v2-windows
           path: ./artifacts
 
       - name: Set release version
