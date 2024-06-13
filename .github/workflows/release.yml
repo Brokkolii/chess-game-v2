@@ -21,22 +21,12 @@ jobs:
         run: |
           GOOS=windows GOARCH=amd64 go build -o chess-game-v2.exe
 
-      - name: Build for Linux
-        run: |
-          GOOS=linux GOARCH=amd64 go build -o chess-game-v2-linux
-
       - name: Upload Windows build artifact
         uses: actions/upload-artifact@v2
         with:
           name: chess-game-v2-windows
           path: chess-game-v2.exe
-
-      - name: Upload Linux build artifact
-        uses: actions/upload-artifact@v2
-        with:
-          name: chess-game-v2-linux
-          path: chess-game-v2-linux
-
+          
   release:
     needs: build
     runs-on: ubuntu-latest
@@ -72,14 +62,4 @@ jobs:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./artifacts/chess-game-v2.exe
           asset_name: chess-game-v2.exe
-          asset_content_type: application/octet-stream
-
-      - name: Upload Release Asset Linux
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./artifacts/chess-game-v2-linux
-          asset_name: chess-game-v2-linux
           asset_content_type: application/octet-stream
