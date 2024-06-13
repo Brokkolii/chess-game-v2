@@ -183,26 +183,104 @@ func (b *Board) ExecuteMove(move *Move) {
 
 func (b *Board) MovesForPiece(piece *Piece) *AvailableMoves {
 	var moves []*Move
+	// TODO: aun pasante
+	// TODO: can move if pinned
 	if piece.Type == "pawn" {
-		// TODO: check if Field is Empty
-		// TODO: check for Takes
-		// TODO: check for Starting square (2fields forward)
-		// TODO: check for aun pasante
 		if piece.Color == "white" {
+			// normal forward
 			row := piece.Field.Row + 1
 			col := piece.Field.Col
-			field := b.FieldAt(row, col)
-			move := NewMove(piece.Field, field)
-			moves = append(moves, move)
+			forwardField := b.FieldAt(row, col)
+			if forwardField != nil && forwardField.Piece == nil {
+				move := NewMove(piece.Field, forwardField)
+				moves = append(moves, move)
+
+				// double forward
+				if piece.Field.Row == 2 {
+					row := piece.Field.Row + 2
+					col := piece.Field.Col
+					doubleForwardField := b.FieldAt(row, col)
+					if doubleForwardField != nil && doubleForwardField.Piece == nil {
+						move := NewMove(piece.Field, doubleForwardField)
+						moves = append(moves, move)
+					}
+				}
+			}
+
+			// takes
+			leftTakeField := b.FieldAt(piece.Field.Row+1, piece.Field.Col-1)
+			if leftTakeField != nil && leftTakeField.Piece != nil && leftTakeField.Piece.Color == "black" {
+				move := NewMove(piece.Field, leftTakeField)
+				moves = append(moves, move)
+			}
+			rightTakeField := b.FieldAt(piece.Field.Row+1, piece.Field.Col+1)
+			if rightTakeField != nil && rightTakeField.Piece != nil && rightTakeField.Piece.Color == "black" {
+				move := NewMove(piece.Field, rightTakeField)
+				moves = append(moves, move)
+			}
+
 		} else {
+			// normal forward
 			row := piece.Field.Row - 1
 			col := piece.Field.Col
-			field := b.FieldAt(row, col)
-			move := NewMove(piece.Field, field)
-			moves = append(moves, move)
+			forwardField := b.FieldAt(row, col)
+			if forwardField != nil && forwardField.Piece == nil {
+				move := NewMove(piece.Field, forwardField)
+				moves = append(moves, move)
+
+				// double forward
+				if piece.Field.Row == 7 {
+					row := piece.Field.Row - 2
+					col := piece.Field.Col
+					doubleForwardField := b.FieldAt(row, col)
+					if doubleForwardField != nil && doubleForwardField.Piece == nil {
+						move := NewMove(piece.Field, doubleForwardField)
+						moves = append(moves, move)
+					}
+				}
+			}
+
+			// takes
+			leftTakeField := b.FieldAt(piece.Field.Row-1, piece.Field.Col-1)
+			if leftTakeField != nil && leftTakeField.Piece != nil && leftTakeField.Piece.Color == "white" {
+				move := NewMove(piece.Field, leftTakeField)
+				moves = append(moves, move)
+			}
+			rightTakeField := b.FieldAt(piece.Field.Row-1, piece.Field.Col+1)
+			if rightTakeField != nil && rightTakeField.Piece != nil && rightTakeField.Piece.Color == "white" {
+				move := NewMove(piece.Field, rightTakeField)
+				moves = append(moves, move)
+			}
 		}
 	}
+	if piece.Type == "rook" || piece.Type == "queen" {
+		// upwards
+		for i := piece.Field.Row + 1; i <= size; i++ {
+			field := b.FieldAt(i, piece.Field.Col)
+
+			if field != nil && field.Piece == nil {
+				move := NewMove(piece.Field, field)
+				moves = append(moves, move)
+			} else if field != nil && field.Piece != nil && field.Piece.Color != piece.Color {
+				move := NewMove(piece.Field, field)
+				moves = append(moves, move)
+				break
+			} else {
+				break
+			}
+
+		}
+	}
+
 	return &AvailableMoves{
 		Moves: moves,
 	}
+}
+
+func GetSquareSize() int {
+	return squareSize
+}
+
+func GetBoardSize() int {
+	return size
 }

@@ -28,7 +28,7 @@ func (p *Piece) Draw(dst *ebiten.Image) {
 	ih := float64(p.Image.Bounds().Dy())
 	x, y := p.getCoords()
 	op := ebiten.DrawImageOptions{}
-	op.GeoM.Scale(squareSize/float64(iw), squareSize/float64(ih))
+	op.GeoM.Scale(float64(GetSquareSize())/float64(iw), float64(GetSquareSize())/float64(ih))
 	op.GeoM.Translate(float64(x), float64(y))
 	dst.DrawImage(&p.Image, &op)
 }
@@ -36,8 +36,8 @@ func (p *Piece) Draw(dst *ebiten.Image) {
 func (p *Piece) getCoords() (x int, y int) {
 	if p.IsDragged {
 		x, y = ebiten.CursorPosition()
-		x = x - (squareSize / 2)
-		y = y - (squareSize / 2)
+		x = x - (GetSquareSize() / 2)
+		y = y - (GetSquareSize() / 2)
 		return x, y
 	} else {
 		return p.Field.getCoords()
