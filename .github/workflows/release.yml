@@ -19,18 +19,47 @@ jobs:
 
       - name: Build for Windows
         run: |
-            GOOS=windows GOARCH=amd64 go build -o chess-game-v2.exe
+          GOOS=windows GOARCH=amd64 go build -o chess-game-v2.exe
 
-      - name: Upload build artifact
+      - name: Build for macOS Intel
+        run: |
+          GOOS=darwin GOARCH=amd64 go build -o chess-game-v2-mac-intel
+
+      - name: Build for macOS M1
+        run: |
+          GOOS=darwin GOARCH=arm64 go build -o chess-game-v2-mac-m1
+
+      - name: Build for Linux
+        run: |
+          GOOS=linux GOARCH=amd64 go build -o chess-game-v2-linux
+
+      - name: Upload Windows build artifact
         uses: actions/upload-artifact@v2
         with:
           name: chess-game-v2-windows
           path: chess-game-v2.exe
 
+      - name: Upload macOS Intel build artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: chess-game-v2-mac-intel
+          path: chess-game-v2-mac-intel
+
+      - name: Upload macOS M1 build artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: chess-game-v2-mac-m1
+          path: chess-game-v2-mac-m1
+
+      - name: Upload Linux build artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: chess-game-v2-linux
+          path: chess-game-v2-linux
+
   release:
     needs: build
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -38,7 +67,6 @@ jobs:
       - name: Download build artifacts
         uses: actions/download-artifact@v2
         with:
-          name: chess-game-v2-windows
           path: ./artifacts
 
       - name: Set release version
@@ -64,4 +92,34 @@ jobs:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./artifacts/chess-game-v2.exe
           asset_name: chess-game-v2.exe
+          asset_content_type: application/octet-stream
+
+      - name: Upload Release Asset macOS Intel
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./artifacts/chess-game-v2-mac-intel
+          asset_name: chess-game-v2-mac-intel
+          asset_content_type: application/octet-stream
+
+      - name: Upload Release Asset macOS M1
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./artifacts/chess-game-v2-mac-m1
+          asset_name: chess-game-v2-mac-m1
+          asset_content_type: application/octet-stream
+
+      - name: Upload Release Asset Linux
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./artifacts/chess-game-v2-linux
+          asset_name: chess-game-v2-linux
           asset_content_type: application/octet-stream
