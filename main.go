@@ -4,45 +4,39 @@ import (
 	"log"
 
 	"github.com/Brokkolii/chess-game-v2/board"
+	"github.com/Brokkolii/chess-game-v2/bot"
 	"github.com/Brokkolii/chess-game-v2/game"
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/inpututil"
 )
+
+type Player struct {
+	Type string
+	Name string
+}
 
 type Game struct {
 	State          *game.GameState
 	DraggingPiece  *board.Piece
 	AvailableMoves *board.AvailableMoves
+	whitePlayer    *Player
+	blackPlayer    *Player
 }
 
 func (g *Game) Update() error {
-	mx, my := ebiten.CursorPosition()
-	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
-		if g.DraggingPiece == nil {
-			clickedPiece := g.State.Board.PieceAtCoords(mx, my)
-			if clickedPiece != nil {
-				clickedPiece.IsDragged = true
-				g.DraggingPiece = clickedPiece
-				g.AvailableMoves = g.State.Board.MovesForPiece(clickedPiece)
-			}
+	if g.State.Turn == "white" {
+		if g.whitePlayer.Type == "human" {
+			handleUserInput(g)
+		} else if g.whitePlayer.Type == "bot" {
+			bot.PlayMove(g.State)
+		}
+	} else {
+		if g.blackPlayer.Type == "human" {
+			handleUserInput(g)
+		} else if g.blackPlayer.Type == "bot" {
+			bot.PlayMove(g.State)
 		}
 	}
-	if inpututil.IsMouseButtonJustReleased(ebiten.MouseButtonLeft) {
-		if g.DraggingPiece != nil {
-			field := g.State.Board.FieldAtCoords(mx, my)
-			if field != nil {
-				// TODO: check if valid move
-				isAvailable := g.AvailableMoves.FieldIsAvailable(field)
-				if isAvailable {
-					move := board.NewMove(g.DraggingPiece.Field, field)
-					g.State.Board.ExecuteMove(move)
-				}
-			}
-			g.DraggingPiece.IsDragged = false
-			g.DraggingPiece = nil
-			g.AvailableMoves = nil
-		}
-	}
+
 	return nil
 }
 
@@ -61,6 +55,14 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeigh
 func NewGame() *Game {
 	return &Game{
 		State: game.NewGameState(),
+		whitePlayer: &Player{
+			Type: "bot",
+			Name: "Brokkolii_1",
+		},
+		blackPlayer: &Player{
+			Type: "bot",
+			Name: "Brokkolii_Bot",
+		},
 	}
 }
 

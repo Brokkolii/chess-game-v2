@@ -6,12 +6,24 @@ import (
 
 type GameState struct {
 	Board *board.Board
-	turn  string
+	Turn  string
 }
 
 func NewGameState() *GameState {
 	return &GameState{
 		Board: board.NewBoard(),
-		turn:  "white",
+		Turn:  "white",
+	}
+}
+
+func (gs *GameState) NextTurn() {
+	gs.Turn = InvertColor(gs.Turn)
+}
+
+func InvertColor(color string) string {
+	if color == "white" {
+		return "black"
+	} else {
+		return "white"
 	}
 }

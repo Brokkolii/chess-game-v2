@@ -1,6 +1,8 @@
 package board
 
 import (
+	"fmt"
+
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
@@ -46,6 +48,75 @@ func NewBoard() *Board {
 	fen := "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 	board.fromFEN(fen)
 	return &board
+}
+
+func NewBoardFromFEN(fen string) *Board {
+	var board Board
+	board.fromFEN(fen)
+	return &board
+}
+
+func (b *Board) deepCopy() *Board {
+	fen := b.toFEN()
+	board := NewBoardFromFEN(fen)
+	return board
+}
+
+func (b *Board) toFEN() string {
+	fen := ""
+	epmtyFieldsCounter := 0
+	for row := 8; row >= 1; row-- {
+		for col := 1; col <= 8; col++ {
+			piece := b.FieldAt(row, col).Piece
+			if piece != nil {
+				if epmtyFieldsCounter > 0 {
+					fen = fen + fmt.Sprint(epmtyFieldsCounter)
+				}
+				epmtyFieldsCounter = 0
+				// ad letter
+				if piece.Color == "white" {
+					switch piece.Type {
+					case "rook":
+						fen = fen + "R"
+					case "bishop":
+						fen = fen + "B"
+					case "knight":
+						fen = fen + "N"
+					case "queen":
+						fen = fen + "Q"
+					case "king":
+						fen = fen + "K"
+					case "pawn":
+						fen = fen + "P"
+					}
+				} else {
+					switch piece.Type {
+					case "rook":
+						fen = fen + "r"
+					case "bishop":
+						fen = fen + "b"
+					case "knight":
+						fen = fen + "n"
+					case "queen":
+						fen = fen + "q"
+					case "king":
+						fen = fen + "k"
+					case "pawn":
+						fen = fen + "p"
+					}
+				}
+			} else {
+				epmtyFieldsCounter++
+			}
+		}
+		if epmtyFieldsCounter > 0 {
+			fen = fen + fmt.Sprint(epmtyFieldsCounter)
+		}
+		epmtyFieldsCounter = 0
+		fen = fen + "/"
+	}
+
+	return fen + " "
 }
 
 func (b *Board) fromFEN(fen string) {
@@ -176,15 +247,16 @@ func (b *Board) AddField(field *Field) {
 }
 
 func (b *Board) ExecuteMove(move *Move) {
-	piece := move.From.Piece
-	move.From.removePiece()
-	move.To.addPiece(piece)
+	fromField := b.FieldAt(move.From.Row, move.From.Col)
+	toField := b.FieldAt(move.To.Row, move.To.Col)
+	piece := fromField.Piece
+	fromField.removePiece()
+	toField.addPiece(piece)
 }
 
-func (b *Board) MovesForPiece(piece *Piece) *AvailableMoves {
+func (b *Board) MovesForPiece(piece *Piece, ignorePins bool) *AvailableMoves {
 	var moves []*Move
 	// TODO: aun pasante
-	// TODO: can move if pinned
 	if piece.Type == "pawn" {
 		if piece.Color == "white" {
 			// normal forward
@@ -193,7 +265,9 @@ func (b *Board) MovesForPiece(piece *Piece) *AvailableMoves {
 			forwardField := b.FieldAt(row, col)
 			if forwardField != nil && forwardField.Piece == nil {
 				move := NewMove(piece.Field, forwardField)
-				moves = append(moves, move)
+				if ignorePins || !b.isInCheckAfterMove(*move) {
+					moves = append(moves, move)
+				}
 
 				// double forward
 				if piece.Field.Row == 2 {
@@ -202,7 +276,9 @@ func (b *Board) MovesForPiece(piece *Piece) *AvailableMoves {
 					doubleForwardField := b.FieldAt(row, col)
 					if doubleForwardField != nil && doubleForwardField.Piece == nil {
 						move := NewMove(piece.Field, doubleForwardField)
-						moves = append(moves, move)
+						if ignorePins || !b.isInCheckAfterMove(*move) {
+							moves = append(moves, move)
+						}
 					}
 				}
 			}
@@ -211,12 +287,16 @@ func (b *Board) MovesForPiece(piece *Piece) *AvailableMoves {
 			leftTakeField := b.FieldAt(piece.Field.Row+1, piece.Field.Col-1)
 			if leftTakeField != nil && leftTakeField.Piece != nil && leftTakeField.Piece.Color != piece.Color {
 				move := NewMove(piece.Field, leftTakeField)
-				moves = append(moves, move)
+				if ignorePins || !b.isInCheckAfterMove(*move) {
+					moves = append(moves, move)
+				}
 			}
 			rightTakeField := b.FieldAt(piece.Field.Row+1, piece.Field.Col+1)
 			if rightTakeField != nil && rightTakeField.Piece != nil && rightTakeField.Piece.Color != piece.Color {
 				move := NewMove(piece.Field, rightTakeField)
-				moves = append(moves, move)
+				if ignorePins || !b.isInCheckAfterMove(*move) {
+					moves = append(moves, move)
+				}
 			}
 
 		} else {
@@ -226,7 +306,9 @@ func (b *Board) MovesForPiece(piece *Piece) *AvailableMoves {
 			forwardField := b.FieldAt(row, col)
 			if forwardField != nil && forwardField.Piece == nil {
 				move := NewMove(piece.Field, forwardField)
-				moves = append(moves, move)
+				if ignorePins || !b.isInCheckAfterMove(*move) {
+					moves = append(moves, move)
+				}
 
 				// double forward
 				if piece.Field.Row == 7 {
@@ -235,7 +317,9 @@ func (b *Board) MovesForPiece(piece *Piece) *AvailableMoves {
 					doubleForwardField := b.FieldAt(row, col)
 					if doubleForwardField != nil && doubleForwardField.Piece == nil {
 						move := NewMove(piece.Field, doubleForwardField)
-						moves = append(moves, move)
+						if ignorePins || !b.isInCheckAfterMove(*move) {
+							moves = append(moves, move)
+						}
 					}
 				}
 			}
@@ -244,12 +328,16 @@ func (b *Board) MovesForPiece(piece *Piece) *AvailableMoves {
 			leftTakeField := b.FieldAt(piece.Field.Row-1, piece.Field.Col-1)
 			if leftTakeField != nil && leftTakeField.Piece != nil && leftTakeField.Piece.Color != piece.Color {
 				move := NewMove(piece.Field, leftTakeField)
-				moves = append(moves, move)
+				if ignorePins || !b.isInCheckAfterMove(*move) {
+					moves = append(moves, move)
+				}
 			}
 			rightTakeField := b.FieldAt(piece.Field.Row-1, piece.Field.Col+1)
 			if rightTakeField != nil && rightTakeField.Piece != nil && rightTakeField.Piece.Color != piece.Color {
 				move := NewMove(piece.Field, rightTakeField)
-				moves = append(moves, move)
+				if ignorePins || !b.isInCheckAfterMove(*move) {
+					moves = append(moves, move)
+				}
 			}
 		}
 	}
@@ -260,10 +348,14 @@ func (b *Board) MovesForPiece(piece *Piece) *AvailableMoves {
 
 			if field != nil && field.Piece == nil {
 				move := NewMove(piece.Field, field)
-				moves = append(moves, move)
+				if ignorePins || !b.isInCheckAfterMove(*move) {
+					moves = append(moves, move)
+				}
 			} else if field != nil && field.Piece != nil && field.Piece.Color != piece.Color {
 				move := NewMove(piece.Field, field)
-				moves = append(moves, move)
+				if ignorePins || !b.isInCheckAfterMove(*move) {
+					moves = append(moves, move)
+				}
 				break
 			} else {
 				break
@@ -275,10 +367,14 @@ func (b *Board) MovesForPiece(piece *Piece) *AvailableMoves {
 
 			if field != nil && field.Piece == nil {
 				move := NewMove(piece.Field, field)
-				moves = append(moves, move)
+				if ignorePins || !b.isInCheckAfterMove(*move) {
+					moves = append(moves, move)
+				}
 			} else if field != nil && field.Piece != nil && field.Piece.Color != piece.Color {
 				move := NewMove(piece.Field, field)
-				moves = append(moves, move)
+				if ignorePins || !b.isInCheckAfterMove(*move) {
+					moves = append(moves, move)
+				}
 				break
 			} else {
 				break
@@ -290,10 +386,14 @@ func (b *Board) MovesForPiece(piece *Piece) *AvailableMoves {
 
 			if field != nil && field.Piece == nil {
 				move := NewMove(piece.Field, field)
-				moves = append(moves, move)
+				if ignorePins || !b.isInCheckAfterMove(*move) {
+					moves = append(moves, move)
+				}
 			} else if field != nil && field.Piece != nil && field.Piece.Color != piece.Color {
 				move := NewMove(piece.Field, field)
-				moves = append(moves, move)
+				if ignorePins || !b.isInCheckAfterMove(*move) {
+					moves = append(moves, move)
+				}
 				break
 			} else {
 				break
@@ -305,10 +405,14 @@ func (b *Board) MovesForPiece(piece *Piece) *AvailableMoves {
 
 			if field != nil && field.Piece == nil {
 				move := NewMove(piece.Field, field)
-				moves = append(moves, move)
+				if ignorePins || !b.isInCheckAfterMove(*move) {
+					moves = append(moves, move)
+				}
 			} else if field != nil && field.Piece != nil && field.Piece.Color != piece.Color {
 				move := NewMove(piece.Field, field)
-				moves = append(moves, move)
+				if ignorePins || !b.isInCheckAfterMove(*move) {
+					moves = append(moves, move)
+				}
 				break
 			} else {
 				break
@@ -323,10 +427,14 @@ func (b *Board) MovesForPiece(piece *Piece) *AvailableMoves {
 
 			if field != nil && field.Piece == nil {
 				move := NewMove(piece.Field, field)
-				moves = append(moves, move)
+				if ignorePins || !b.isInCheckAfterMove(*move) {
+					moves = append(moves, move)
+				}
 			} else if field != nil && field.Piece != nil && field.Piece.Color != piece.Color {
 				move := NewMove(piece.Field, field)
-				moves = append(moves, move)
+				if ignorePins || !b.isInCheckAfterMove(*move) {
+					moves = append(moves, move)
+				}
 				break
 			} else {
 				break
@@ -338,10 +446,14 @@ func (b *Board) MovesForPiece(piece *Piece) *AvailableMoves {
 
 			if field != nil && field.Piece == nil {
 				move := NewMove(piece.Field, field)
-				moves = append(moves, move)
+				if ignorePins || !b.isInCheckAfterMove(*move) {
+					moves = append(moves, move)
+				}
 			} else if field != nil && field.Piece != nil && field.Piece.Color != piece.Color {
 				move := NewMove(piece.Field, field)
-				moves = append(moves, move)
+				if ignorePins || !b.isInCheckAfterMove(*move) {
+					moves = append(moves, move)
+				}
 				break
 			} else {
 				break
@@ -353,10 +465,14 @@ func (b *Board) MovesForPiece(piece *Piece) *AvailableMoves {
 
 			if field != nil && field.Piece == nil {
 				move := NewMove(piece.Field, field)
-				moves = append(moves, move)
+				if ignorePins || !b.isInCheckAfterMove(*move) {
+					moves = append(moves, move)
+				}
 			} else if field != nil && field.Piece != nil && field.Piece.Color != piece.Color {
 				move := NewMove(piece.Field, field)
-				moves = append(moves, move)
+				if ignorePins || !b.isInCheckAfterMove(*move) {
+					moves = append(moves, move)
+				}
 				break
 			} else {
 				break
@@ -368,10 +484,14 @@ func (b *Board) MovesForPiece(piece *Piece) *AvailableMoves {
 
 			if field != nil && field.Piece == nil {
 				move := NewMove(piece.Field, field)
-				moves = append(moves, move)
+				if ignorePins || !b.isInCheckAfterMove(*move) {
+					moves = append(moves, move)
+				}
 			} else if field != nil && field.Piece != nil && field.Piece.Color != piece.Color {
 				move := NewMove(piece.Field, field)
-				moves = append(moves, move)
+				if ignorePins || !b.isInCheckAfterMove(*move) {
+					moves = append(moves, move)
+				}
 				break
 			} else {
 				break
@@ -380,15 +500,46 @@ func (b *Board) MovesForPiece(piece *Piece) *AvailableMoves {
 	}
 
 	if piece.Type == "knight" {
-		jumps := [][]int{{2, 1}, {1, 2}, {-1, 2}, {-2, 1}, {-2, -1}, {-1, -2}, {1, -2}, {2, -1}}
-		for _, jump := range jumps {
-			field := b.FieldAt(piece.Field.Row+jump[0], piece.Field.Col+jump[1])
+		// maybe i can use this offset technique on all moves
+		offsets := [][]int{{2, 1}, {1, 2}, {-1, 2}, {-2, 1}, {-2, -1}, {-1, -2}, {1, -2}, {2, -1}}
+		for _, offset := range offsets {
+			field := b.FieldAt(piece.Field.Row+offset[0], piece.Field.Col+offset[1])
 			if field != nil && field.Piece == nil {
 				move := NewMove(piece.Field, field)
-				moves = append(moves, move)
+				if ignorePins || !b.isInCheckAfterMove(*move) {
+
+					moves = append(moves, move)
+
+				}
 			} else if field != nil && field.Piece != nil && field.Piece.Color != piece.Color {
 				move := NewMove(piece.Field, field)
-				moves = append(moves, move)
+				if ignorePins || !b.isInCheckAfterMove(*move) {
+
+					moves = append(moves, move)
+
+				}
+			}
+		}
+	}
+
+	if piece.Type == "king" {
+		offsets := [][]int{{1, 1}, {0, 1}, {-1, 1}, {-1, 0}, {-1, -1}, {0, -1}, {1, -1}, {1, 0}}
+		for _, offset := range offsets {
+			field := b.FieldAt(piece.Field.Row+offset[0], piece.Field.Col+offset[1])
+			if field != nil && field.Piece == nil {
+				move := NewMove(piece.Field, field)
+				if ignorePins || !b.isInCheckAfterMove(*move) {
+
+					moves = append(moves, move)
+
+				}
+			} else if field != nil && field.Piece != nil && field.Piece.Color != piece.Color {
+				move := NewMove(piece.Field, field)
+				if ignorePins || !b.isInCheckAfterMove(*move) {
+
+					moves = append(moves, move)
+
+				}
 			}
 		}
 	}
@@ -404,4 +555,58 @@ func GetSquareSize() int {
 
 func GetBoardSize() int {
 	return size
+}
+
+func (b *Board) MovesForColor(color string) *AvailableMoves {
+	var moves []*Move
+
+	for _, piece := range b.Pieces() {
+		if piece.Color == color {
+			moves = append(moves, b.MovesForPiece(piece, true).Moves...)
+		}
+	}
+
+	return &AvailableMoves{
+		Moves: moves,
+	}
+}
+
+func (b *Board) isInCheck(color string) bool {
+	var oppositeColor string
+	if color == "white" {
+		oppositeColor = "black"
+	} else {
+		oppositeColor = "white"
+	}
+
+	for _, move := range b.MovesForColor(oppositeColor).Moves {
+		if move.To.Piece != nil && move.To.Piece.Type == "king" && move.To.Piece.Color == color {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (b *Board) isInCheckAfterMove(move Move) bool {
+	color := move.From.Piece.Color
+	newBoard := b.deepCopy()
+	newBoard.ExecuteMove(&move)
+	return newBoard.isInCheck(color)
+}
+
+func (b *Board) IsCheckMate(color string) bool {
+	// TODO Method is not working yet :D
+	if b.isInCheck(color) {
+		for _, piece := range b.Pieces() {
+			if piece.Color == color {
+				moves := b.MovesForPiece(piece, true).Moves
+				if moves == nil || len(moves) > 0 {
+					return false
+				}
+			}
+		}
+		return true
+	}
+	return false
 }
