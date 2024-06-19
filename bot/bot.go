@@ -4,17 +4,16 @@ import (
 	"math/rand"
 
 	"github.com/Brokkolii/chess-game-v2/board"
-	"github.com/Brokkolii/chess-game-v2/game"
+	"github.com/Brokkolii/chess-game-v2/match"
 )
 
-func PlayMove(state *game.GameState) {
+func GetMove(state *match.State) *board.Move {
 	move := ChooseMove(state)
-	state.Board.ExecuteMove(move)
-	state.NextTurn()
+	return move
 }
 
-func ChooseMove(state *game.GameState) *board.Move {
-	moves := state.Board.MovesForColor(state.Turn).Moves
+func ChooseMove(state *match.State) *board.Move {
+	moves := state.Board.MovesForColor(state.Turn.Color).Moves
 	randomIndex := rand.Intn(len(moves))
 	return moves[randomIndex]
 }

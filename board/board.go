@@ -7,8 +7,10 @@ import (
 )
 
 type Board struct {
-	Fields [size][size]*Field
-	Image  *ebiten.Image
+	Fields   [size][size]*Field
+	Image    *ebiten.Image
+	Started  bool
+	GameOver string
 }
 
 const (
@@ -255,6 +257,7 @@ func (b *Board) ExecuteMove(move *Move) {
 }
 
 func (b *Board) MovesForPiece(piece *Piece, ignorePins bool) *AvailableMoves {
+
 	var moves []*Move
 	// TODO: aun pasante
 	if piece.Type == "pawn" {
