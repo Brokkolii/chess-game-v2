@@ -81,6 +81,7 @@ func (s *State) PlayMove(move *board.Move) {
 			s.endMatch(s.Turn)
 		}
 
+		fmt.Println("new evaluation for", s.Turn.Color, s.Evaluate())
 		s.nextTurn()
 	}
 }

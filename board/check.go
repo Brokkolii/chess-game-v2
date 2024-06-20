@@ -4,7 +4,7 @@ import "github.com/Brokkolii/chess-game-v2/util"
 
 func (b *Board) isInCheckAfterMove(move Move) bool {
 	color := move.From.Piece.Color
-	newBoard := b.deepCopy()
+	newBoard := b.DeepCopy()
 	newBoard.ExecuteMove(&move)
 	return newBoard.isInCheck(color)
 }

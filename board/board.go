@@ -56,7 +56,7 @@ func NewBoardFromFEN(fen string) *Board {
 	return &board
 }
 
-func (b *Board) deepCopy() *Board {
+func (b *Board) DeepCopy() *Board {
 	fen := b.toFEN()
 	board := NewBoardFromFEN(fen)
 	return board
