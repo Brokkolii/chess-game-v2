@@ -1,6 +1,8 @@
 package match
 
 import (
+	"fmt"
+
 	"github.com/Brokkolii/chess-game-v2/board"
 	"github.com/Brokkolii/chess-game-v2/util"
 )
@@ -52,9 +54,11 @@ func (s *State) StartMatch() {
 	s.winner = nil
 	s.Turn = s.getPlayerWithColor("white")
 	s.matchStarted = true
+	s.Board = board.NewBoard()
 }
 
 func (s *State) endMatch(winner *Player) {
+	fmt.Println("Match is over!", winner.Color, "won!")
 	s.winner = winner
 	s.matchOver = true
 	s.Turn = nil

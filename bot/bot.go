@@ -13,7 +13,7 @@ func GetMove(state *match.State) *board.Move {
 }
 
 func ChooseMove(state *match.State) *board.Move {
-	moves := state.Board.MovesForColor(state.Turn.Color).Moves
+	moves := state.Board.MovesForColor(state.Turn.Color, false).Moves
 	randomIndex := rand.Intn(len(moves))
 	return moves[randomIndex]
 }
