@@ -1,6 +1,7 @@
 package board
 
 import (
+	"fmt"
 	"image/color"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -18,7 +19,7 @@ type Field struct {
 }
 
 func (f *Field) getLabel() string {
-	return string(f.Row) + string('A'+f.Col-1)
+	return fmt.Sprint(f.Row) + fmt.Sprint(string(rune('A'+f.Col-1)))
 }
 
 func (f *Field) getCoords() (x int, y int) {

@@ -5,8 +5,10 @@ import (
 )
 
 type Board struct {
-	Fields [size][size]*Field
-	Image  *ebiten.Image
+	Fields   [size][size]*Field
+	Image    *ebiten.Image
+	Started  bool
+	GameOver string
 }
 
 const (
@@ -48,86 +50,16 @@ func NewBoard() *Board {
 	return &board
 }
 
-func (b *Board) fromFEN(fen string) {
-	row := 8
-	col := 1
-	for _, char := range fen {
-		switch char {
-		case 'r':
-			piece := NewPiece("black", "rook", row, col)
-			field := NewFieldWithPiece(row, col, piece)
-			b.AddField(field)
-			col++
-		case 'n':
-			piece := NewPiece("black", "knight", row, col)
-			field := NewFieldWithPiece(row, col, piece)
-			b.AddField(field)
-			col++
-		case 'b':
-			piece := NewPiece("black", "bishop", row, col)
-			field := NewFieldWithPiece(row, col, piece)
-			b.AddField(field)
-			col++
-		case 'q':
-			piece := NewPiece("black", "queen", row, col)
-			field := NewFieldWithPiece(row, col, piece)
-			b.AddField(field)
-			col++
-		case 'k':
-			piece := NewPiece("black", "king", row, col)
-			field := NewFieldWithPiece(row, col, piece)
-			b.AddField(field)
-			col++
-		case 'p':
-			piece := NewPiece("black", "pawn", row, col)
-			field := NewFieldWithPiece(row, col, piece)
-			b.AddField(field)
-			col++
-		case 'R':
-			piece := NewPiece("white", "rook", row, col)
-			field := NewFieldWithPiece(row, col, piece)
-			b.AddField(field)
-			col++
-		case 'N':
-			piece := NewPiece("white", "knight", row, col)
-			field := NewFieldWithPiece(row, col, piece)
-			b.AddField(field)
-			col++
-		case 'B':
-			piece := NewPiece("white", "bishop", row, col)
-			field := NewFieldWithPiece(row, col, piece)
-			b.AddField(field)
-			col++
-		case 'Q':
-			piece := NewPiece("white", "queen", row, col)
-			field := NewFieldWithPiece(row, col, piece)
-			b.AddField(field)
-			col++
-		case 'K':
-			piece := NewPiece("white", "king", row, col)
-			field := NewFieldWithPiece(row, col, piece)
-			b.AddField(field)
-			col++
-		case 'P':
-			piece := NewPiece("white", "pawn", row, col)
-			field := NewFieldWithPiece(row, col, piece)
-			b.AddField(field)
-			col++
-		case '/':
-			row--
-			col = 1
-		case ' ':
-			return
-		default:
-			if char >= '1' && char <= '8' {
-				for i := 1; i <= int(char-'0'); i++ {
-					field := NewField(row, col)
-					b.AddField(field)
-					col++
-				}
-			}
-		}
-	}
+func NewBoardFromFEN(fen string) *Board {
+	var board Board
+	board.fromFEN(fen)
+	return &board
+}
+
+func (b *Board) deepCopy() *Board {
+	fen := b.toFEN()
+	board := NewBoardFromFEN(fen)
+	return board
 }
 
 func (b *Board) Pieces() []*Piece {
@@ -176,226 +108,11 @@ func (b *Board) AddField(field *Field) {
 }
 
 func (b *Board) ExecuteMove(move *Move) {
-	piece := move.From.Piece
-	move.From.removePiece()
-	move.To.addPiece(piece)
-}
-
-func (b *Board) MovesForPiece(piece *Piece) *AvailableMoves {
-	var moves []*Move
-	// TODO: aun pasante
-	// TODO: can move if pinned
-	if piece.Type == "pawn" {
-		if piece.Color == "white" {
-			// normal forward
-			row := piece.Field.Row + 1
-			col := piece.Field.Col
-			forwardField := b.FieldAt(row, col)
-			if forwardField != nil && forwardField.Piece == nil {
-				move := NewMove(piece.Field, forwardField)
-				moves = append(moves, move)
-
-				// double forward
-				if piece.Field.Row == 2 {
-					row := piece.Field.Row + 2
-					col := piece.Field.Col
-					doubleForwardField := b.FieldAt(row, col)
-					if doubleForwardField != nil && doubleForwardField.Piece == nil {
-						move := NewMove(piece.Field, doubleForwardField)
-						moves = append(moves, move)
-					}
-				}
-			}
-
-			// takes
-			leftTakeField := b.FieldAt(piece.Field.Row+1, piece.Field.Col-1)
-			if leftTakeField != nil && leftTakeField.Piece != nil && leftTakeField.Piece.Color != piece.Color {
-				move := NewMove(piece.Field, leftTakeField)
-				moves = append(moves, move)
-			}
-			rightTakeField := b.FieldAt(piece.Field.Row+1, piece.Field.Col+1)
-			if rightTakeField != nil && rightTakeField.Piece != nil && rightTakeField.Piece.Color != piece.Color {
-				move := NewMove(piece.Field, rightTakeField)
-				moves = append(moves, move)
-			}
-
-		} else {
-			// normal forward
-			row := piece.Field.Row - 1
-			col := piece.Field.Col
-			forwardField := b.FieldAt(row, col)
-			if forwardField != nil && forwardField.Piece == nil {
-				move := NewMove(piece.Field, forwardField)
-				moves = append(moves, move)
-
-				// double forward
-				if piece.Field.Row == 7 {
-					row := piece.Field.Row - 2
-					col := piece.Field.Col
-					doubleForwardField := b.FieldAt(row, col)
-					if doubleForwardField != nil && doubleForwardField.Piece == nil {
-						move := NewMove(piece.Field, doubleForwardField)
-						moves = append(moves, move)
-					}
-				}
-			}
-
-			// takes
-			leftTakeField := b.FieldAt(piece.Field.Row-1, piece.Field.Col-1)
-			if leftTakeField != nil && leftTakeField.Piece != nil && leftTakeField.Piece.Color != piece.Color {
-				move := NewMove(piece.Field, leftTakeField)
-				moves = append(moves, move)
-			}
-			rightTakeField := b.FieldAt(piece.Field.Row-1, piece.Field.Col+1)
-			if rightTakeField != nil && rightTakeField.Piece != nil && rightTakeField.Piece.Color != piece.Color {
-				move := NewMove(piece.Field, rightTakeField)
-				moves = append(moves, move)
-			}
-		}
-	}
-	if piece.Type == "rook" || piece.Type == "queen" {
-		// upwards
-		for i := piece.Field.Row + 1; i <= size; i++ {
-			field := b.FieldAt(i, piece.Field.Col)
-
-			if field != nil && field.Piece == nil {
-				move := NewMove(piece.Field, field)
-				moves = append(moves, move)
-			} else if field != nil && field.Piece != nil && field.Piece.Color != piece.Color {
-				move := NewMove(piece.Field, field)
-				moves = append(moves, move)
-				break
-			} else {
-				break
-			}
-		}
-		// downwards
-		for i := piece.Field.Row - 1; i >= 1; i-- {
-			field := b.FieldAt(i, piece.Field.Col)
-
-			if field != nil && field.Piece == nil {
-				move := NewMove(piece.Field, field)
-				moves = append(moves, move)
-			} else if field != nil && field.Piece != nil && field.Piece.Color != piece.Color {
-				move := NewMove(piece.Field, field)
-				moves = append(moves, move)
-				break
-			} else {
-				break
-			}
-		}
-		// left
-		for i := piece.Field.Col - 1; i >= 1; i-- {
-			field := b.FieldAt(piece.Field.Row, i)
-
-			if field != nil && field.Piece == nil {
-				move := NewMove(piece.Field, field)
-				moves = append(moves, move)
-			} else if field != nil && field.Piece != nil && field.Piece.Color != piece.Color {
-				move := NewMove(piece.Field, field)
-				moves = append(moves, move)
-				break
-			} else {
-				break
-			}
-		}
-		// right
-		for i := piece.Field.Col + 1; i <= size; i++ {
-			field := b.FieldAt(piece.Field.Row, i)
-
-			if field != nil && field.Piece == nil {
-				move := NewMove(piece.Field, field)
-				moves = append(moves, move)
-			} else if field != nil && field.Piece != nil && field.Piece.Color != piece.Color {
-				move := NewMove(piece.Field, field)
-				moves = append(moves, move)
-				break
-			} else {
-				break
-			}
-		}
-	}
-
-	if piece.Type == "bishop" || piece.Type == "queen" {
-		// top right
-		for i := 1; i <= size; i++ {
-			field := b.FieldAt(piece.Field.Row+i, piece.Field.Col+i)
-
-			if field != nil && field.Piece == nil {
-				move := NewMove(piece.Field, field)
-				moves = append(moves, move)
-			} else if field != nil && field.Piece != nil && field.Piece.Color != piece.Color {
-				move := NewMove(piece.Field, field)
-				moves = append(moves, move)
-				break
-			} else {
-				break
-			}
-		}
-		// bottom right
-		for i := 1; i <= size; i++ {
-			field := b.FieldAt(piece.Field.Row-i, piece.Field.Col+i)
-
-			if field != nil && field.Piece == nil {
-				move := NewMove(piece.Field, field)
-				moves = append(moves, move)
-			} else if field != nil && field.Piece != nil && field.Piece.Color != piece.Color {
-				move := NewMove(piece.Field, field)
-				moves = append(moves, move)
-				break
-			} else {
-				break
-			}
-		}
-		// bottom left
-		for i := 1; i <= size; i++ {
-			field := b.FieldAt(piece.Field.Row-i, piece.Field.Col-i)
-
-			if field != nil && field.Piece == nil {
-				move := NewMove(piece.Field, field)
-				moves = append(moves, move)
-			} else if field != nil && field.Piece != nil && field.Piece.Color != piece.Color {
-				move := NewMove(piece.Field, field)
-				moves = append(moves, move)
-				break
-			} else {
-				break
-			}
-		}
-		// top left
-		for i := 1; i <= size; i++ {
-			field := b.FieldAt(piece.Field.Row+i, piece.Field.Col-i)
-
-			if field != nil && field.Piece == nil {
-				move := NewMove(piece.Field, field)
-				moves = append(moves, move)
-			} else if field != nil && field.Piece != nil && field.Piece.Color != piece.Color {
-				move := NewMove(piece.Field, field)
-				moves = append(moves, move)
-				break
-			} else {
-				break
-			}
-		}
-	}
-
-	if piece.Type == "knight" {
-		jumps := [][]int{{2, 1}, {1, 2}, {-1, 2}, {-2, 1}, {-2, -1}, {-1, -2}, {1, -2}, {2, -1}}
-		for _, jump := range jumps {
-			field := b.FieldAt(piece.Field.Row+jump[0], piece.Field.Col+jump[1])
-			if field != nil && field.Piece == nil {
-				move := NewMove(piece.Field, field)
-				moves = append(moves, move)
-			} else if field != nil && field.Piece != nil && field.Piece.Color != piece.Color {
-				move := NewMove(piece.Field, field)
-				moves = append(moves, move)
-			}
-		}
-	}
-
-	return &AvailableMoves{
-		Moves: moves,
-	}
+	fromField := b.FieldAt(move.From.Row, move.From.Col)
+	toField := b.FieldAt(move.To.Row, move.To.Col)
+	piece := fromField.Piece
+	fromField.removePiece()
+	toField.addPiece(piece)
 }
 
 func GetSquareSize() int {

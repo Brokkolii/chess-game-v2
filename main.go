@@ -1,56 +1,49 @@
 package main
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/Brokkolii/chess-game-v2/board"
-	"github.com/Brokkolii/chess-game-v2/game"
+	"github.com/Brokkolii/chess-game-v2/bot"
+	"github.com/Brokkolii/chess-game-v2/match"
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/inpututil"
 )
 
 type Game struct {
-	State          *game.GameState
+	State          *match.State
 	DraggingPiece  *board.Piece
 	AvailableMoves *board.AvailableMoves
 }
 
 func (g *Game) Update() error {
-	mx, my := ebiten.CursorPosition()
-	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
-		if g.DraggingPiece == nil {
-			clickedPiece := g.State.Board.PieceAtCoords(mx, my)
-			if clickedPiece != nil {
-				clickedPiece.IsDragged = true
-				g.DraggingPiece = clickedPiece
-				g.AvailableMoves = g.State.Board.MovesForPiece(clickedPiece)
-			}
+	if g.State.MatchIsRunning() {
+		turnType := g.State.Turn.PlayerType
+		var move *board.Move
+		if turnType == "human" {
+			move = GetUserMove(g)
+		} else if turnType == "bot" {
+			move = bot.GetMove(g.State)
 		}
-	}
-	if inpututil.IsMouseButtonJustReleased(ebiten.MouseButtonLeft) {
-		if g.DraggingPiece != nil {
-			field := g.State.Board.FieldAtCoords(mx, my)
-			if field != nil {
-				// TODO: check if valid move
-				isAvailable := g.AvailableMoves.FieldIsAvailable(field)
-				if isAvailable {
-					move := board.NewMove(g.DraggingPiece.Field, field)
-					g.State.Board.ExecuteMove(move)
-				}
-			}
-			g.DraggingPiece.IsDragged = false
-			g.DraggingPiece = nil
-			g.AvailableMoves = nil
+
+		if move != nil {
+			g.State.PlayMove(move)
 		}
+	} else {
+		// TODO Temp solution until there is a menu
+		fmt.Println("Starting new Game")
+		g.State.StartMatch()
 	}
 	return nil
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
-	g.State.Board.Draw(screen)
-	g.State.Board.DrawPieces(screen)
-	if g.AvailableMoves != nil {
-		g.State.Board.DrawMoves(screen, g.AvailableMoves.Moves)
+	if g.State.MatchIsRunning() {
+		g.State.Board.Draw(screen)
+		g.State.Board.DrawPieces(screen)
+		if g.AvailableMoves != nil {
+			g.State.Board.DrawMoves(screen, g.AvailableMoves.Moves)
+		}
 	}
 }
 
@@ -60,7 +53,7 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeigh
 
 func NewGame() *Game {
 	return &Game{
-		State: game.NewGameState(),
+		State: match.NewState(),
 	}
 }
 
