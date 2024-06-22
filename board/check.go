@@ -1,12 +1,10 @@
 package board
 
-import (
-	"github.com/Brokkolii/chess-game-v2/util"
-)
+import "github.com/Brokkolii/chess-game-v2/util"
 
 func (b *Board) isInCheckAfterMove(move Move) bool {
 	color := move.From.Piece.Color
-	newBoard := b.deepCopy()
+	newBoard := b.DeepCopy()
 	newBoard.ExecuteMove(&move)
 	return newBoard.isInCheck(color)
 }
@@ -14,7 +12,7 @@ func (b *Board) isInCheckAfterMove(move Move) bool {
 func (b *Board) IsCheckMate(color string) bool {
 	// TODO Method is not working yet :D
 	if b.isInCheck(color) {
-		moves := b.MovesForColor(color, false).Moves
+		moves := b.MovesForColor(color, false)
 		if len(moves) == 0 {
 			return true
 		}
@@ -23,7 +21,7 @@ func (b *Board) IsCheckMate(color string) bool {
 }
 
 func (b *Board) isInCheck(color string) bool {
-	moves := b.MovesForColor(util.InvertColor(color), true).Moves
+	moves := b.MovesForColor(util.InvertColor(color), true)
 	for _, move := range moves {
 		if move.To.Piece != nil && move.To.Piece.Type == "king" && move.To.Piece.Color == color {
 			//fmt.Println(util.InvertColor(color), move.From.Piece.Type, move.From.Row, move.From.Col, "attacking", color, "king")

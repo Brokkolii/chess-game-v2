@@ -5,10 +5,16 @@ import (
 )
 
 type Board struct {
-	Fields   [size][size]*Field
-	Image    *ebiten.Image
-	Started  bool
-	GameOver string
+	Image                *ebiten.Image
+	Fields               [size][size]*Field
+	Turn                 string
+	WhiteKingsideCastle  bool
+	WhiteQueensideCastle bool
+	BlackKingsideCastle  bool
+	BlackQueensideCastle bool
+	EnPassant            *Field
+	HalfMoveClock        int
+	FullMoveNumber       int
 }
 
 const (
@@ -43,21 +49,14 @@ func (b *Board) DrawMoves(dst *ebiten.Image, moves []*Move) {
 	}
 }
 
-func NewBoard() *Board {
-	var board Board
-	fen := "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
-	board.fromFEN(fen)
-	return &board
-}
-
 func NewBoardFromFEN(fen string) *Board {
 	var board Board
-	board.fromFEN(fen)
+	board.FromFEN(fen)
 	return &board
 }
 
-func (b *Board) deepCopy() *Board {
-	fen := b.toFEN()
+func (b *Board) DeepCopy() *Board {
+	fen := b.ToFEN()
 	board := NewBoardFromFEN(fen)
 	return board
 }
@@ -121,4 +120,12 @@ func GetSquareSize() int {
 
 func GetBoardSize() int {
 	return size
+}
+
+func (b *Board) NextTurn() {
+	if b.Turn == "white" {
+		b.Turn = "black"
+	} else {
+		b.Turn = "white"
+	}
 }

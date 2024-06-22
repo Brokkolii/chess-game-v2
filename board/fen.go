@@ -1,9 +1,15 @@
 package board
 
-import "fmt"
+import (
+	"fmt"
+	"strconv"
+	"strings"
+)
 
-func (b *Board) toFEN() string {
+func (b *Board) ToFEN() string {
 	fen := ""
+
+	// setup board
 	epmtyFieldsCounter := 0
 	for row := 8; row >= 1; row-- {
 		for col := 1; col <= 8; col++ {
@@ -55,14 +61,55 @@ func (b *Board) toFEN() string {
 		epmtyFieldsCounter = 0
 		fen = fen + "/"
 	}
+	fen += " "
 
-	return fen + " "
+	// turn
+	if b.Turn == "white" {
+		fen += "w"
+	} else {
+		fen += "b"
+	}
+	fen += " "
+
+	// castling
+	castling := ""
+	if b.BlackKingsideCastle {
+		castling += "K"
+	}
+	if b.BlackQueensideCastle {
+		castling += "Q"
+	}
+	if b.WhiteKingsideCastle {
+		castling += "k"
+	}
+	if b.WhiteQueensideCastle {
+		castling += "q"
+	}
+	if castling == "" {
+		castling = "-"
+	}
+	fen += castling + " "
+
+	// enpassante
+	// TODO implement enpassante
+	fen += "- "
+
+	// half move clock
+	fen += strconv.Itoa(b.HalfMoveClock) + " "
+
+	// full move number
+	fen += strconv.Itoa(b.FullMoveNumber) + " "
+
+	return fen
 }
 
-func (b *Board) fromFEN(fen string) {
+func (b *Board) FromFEN(fen string) error {
+	fenParts := strings.Split(fen, " ")
+
+	// setup board
 	row := 8
 	col := 1
-	for _, char := range fen {
+	for _, char := range fenParts[0] {
 		switch char {
 		case 'r':
 			piece := NewPiece("black", "rook", row, col)
@@ -127,8 +174,6 @@ func (b *Board) fromFEN(fen string) {
 		case '/':
 			row--
 			col = 1
-		case ' ':
-			return
 		default:
 			if char >= '1' && char <= '8' {
 				for i := 1; i <= int(char-'0'); i++ {
@@ -139,4 +184,37 @@ func (b *Board) fromFEN(fen string) {
 			}
 		}
 	}
+
+	// turn
+	if fenParts[1] == "w" {
+		b.Turn = "white"
+	} else {
+		b.Turn = "black"
+	}
+
+	// castling
+	b.BlackKingsideCastle = strings.Contains(fenParts[2], "K")
+	b.BlackQueensideCastle = strings.Contains(fenParts[2], "Q")
+	b.WhiteKingsideCastle = strings.Contains(fenParts[2], "k")
+	b.WhiteQueensideCastle = strings.Contains(fenParts[2], "q")
+
+	//en passante
+	// TODO implement en passante
+	b.EnPassant = nil
+
+	// half move clock
+	hmc, err := strconv.Atoi(fenParts[4])
+	if err != nil {
+		return err
+	}
+	b.HalfMoveClock = hmc
+
+	// half move clock
+	fmn, err := strconv.Atoi(fenParts[5])
+	if err != nil {
+		return err
+	}
+	b.FullMoveNumber = fmn
+
+	return nil
 }

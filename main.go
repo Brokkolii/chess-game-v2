@@ -4,31 +4,31 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/Brokkolii/chess-game-v2/board"
-	"github.com/Brokkolii/chess-game-v2/bot"
 	"github.com/Brokkolii/chess-game-v2/match"
+	movehandler "github.com/Brokkolii/chess-game-v2/move-handler"
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
 type Game struct {
-	State          *match.State
-	DraggingPiece  *board.Piece
-	AvailableMoves *board.AvailableMoves
+	State       *match.State
+	MoveHandler *movehandler.MoveHandler
 }
 
 func (g *Game) Update() error {
 	if g.State.MatchIsRunning() {
-		turnType := g.State.Turn.PlayerType
-		var move *board.Move
-		if turnType == "human" {
-			move = GetUserMove(g)
-		} else if turnType == "bot" {
-			move = bot.GetMove(g.State)
+		if !g.MoveHandler.IsThinking() {
+			move := g.MoveHandler.GetChoosenMove()
+			if move != nil {
+				g.State.PlayMove(move)
+				g.MoveHandler.Reset()
+			} else {
+				g.MoveHandler.RequestMove(g.State)
+			}
+
+		} else {
+			g.MoveHandler.CheckForHumanMove(g.State)
 		}
 
-		if move != nil {
-			g.State.PlayMove(move)
-		}
 	} else {
 		// TODO Temp solution until there is a menu
 		fmt.Println("Starting new Game")
@@ -41,9 +41,14 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	if g.State.MatchIsRunning() {
 		g.State.Board.Draw(screen)
 		g.State.Board.DrawPieces(screen)
-		if g.AvailableMoves != nil {
-			g.State.Board.DrawMoves(screen, g.AvailableMoves.Moves)
+
+		// TODO draw movecollection of movehandler
+		// TODO rethink drawMoves func => infavor of marking Fields in ways
+		pieceMoves := g.MoveHandler.GetPieceMoves()
+		if pieceMoves != nil {
+			g.State.Board.DrawMoves(screen, pieceMoves)
 		}
+
 	}
 }
 
@@ -53,7 +58,8 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeigh
 
 func NewGame() *Game {
 	return &Game{
-		State: match.NewState(),
+		State:       match.NewState(),
+		MoveHandler: movehandler.NewMoveHandler(),
 	}
 }
 

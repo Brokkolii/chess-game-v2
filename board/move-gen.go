@@ -1,6 +1,6 @@
 package board
 
-func (b *Board) MovesForPiece(piece *Piece, ignorePins bool) *AvailableMoves {
+func (b *Board) MovesForPiece(piece *Piece, ignorePins bool) []*Move {
 	var moves []*Move
 	// TODO: aun pasante
 	if piece.Type == "pawn" {
@@ -290,21 +290,17 @@ func (b *Board) MovesForPiece(piece *Piece, ignorePins bool) *AvailableMoves {
 		}
 	}
 
-	return &AvailableMoves{
-		Moves: moves,
-	}
+	return moves
 }
 
-func (b *Board) MovesForColor(color string, ignorePins bool) *AvailableMoves {
+func (b *Board) MovesForColor(color string, ignorePins bool) []*Move {
 	var moves []*Move
 
 	for _, piece := range b.Pieces() {
 		if piece.Color == color {
-			moves = append(moves, b.MovesForPiece(piece, ignorePins).Moves...)
+			moves = append(moves, b.MovesForPiece(piece, ignorePins)...)
 		}
 	}
 
-	return &AvailableMoves{
-		Moves: moves,
-	}
+	return moves
 }
