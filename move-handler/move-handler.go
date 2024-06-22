@@ -48,13 +48,14 @@ func (mh *MoveHandler) RequestMove(state *match.State) {
 	mh.thinking = true
 
 	go func() {
-		moves := state.Board.MovesForColor(state.Turn.Color, false)
+		moves := state.Board.MovesForColor(state.Board.Turn, false)
 		if mh.thinking {
 			mh.moveCollection.availableMoves = moves
 		}
 	}()
 
-	if state.Turn.PlayerType == "bot" {
+	player := state.GetPlayerWithColor(state.Board.Turn)
+	if player.PlayerType == "bot" {
 		c := make(chan *MoveCollection)
 		go mh.waitForBotMove(state, c)
 		//Receive messages from the channel

@@ -8,7 +8,8 @@ import (
 )
 
 func (mh *MoveHandler) CheckForHumanMove(s *match.State) {
-	if s.Turn.PlayerType != "human" {
+	player := s.GetPlayerWithColor(s.Board.Turn)
+	if player.PlayerType != "human" {
 		return
 	}
 	// get available moves, pieceMoves, consideringMoves
@@ -20,7 +21,7 @@ func (mh *MoveHandler) CheckForHumanMove(s *match.State) {
 		if mh.clickedPiece == nil {
 			mx, my := ebiten.CursorPosition()
 			clickedPiece := s.Board.PieceAtCoords(mx, my)
-			if clickedPiece != nil && clickedPiece.Color == s.Turn.Color {
+			if clickedPiece != nil && clickedPiece.Color == s.Board.Turn {
 				clickedPiece.IsDragged = true
 				mh.clickedPiece = clickedPiece
 

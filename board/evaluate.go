@@ -1,14 +1,14 @@
-package match
+package board
 
-func (s *State) Evaluate() int {
+func (b *Board) Evaluate() int {
 	evaluation := 0
-	evaluation += s.evaluateByPieceValue()
+	evaluation += b.evaluateByPieceValue()
 	return evaluation
 }
 
-func (s *State) evaluateByPieceValue() int {
+func (b *Board) evaluateByPieceValue() int {
 	evaluation := 0
-	for _, piece := range s.Board.Pieces() {
+	for _, piece := range b.Pieces() {
 		if piece != nil {
 			pieceValue := 0
 			switch piece.Type {
@@ -25,7 +25,7 @@ func (s *State) evaluateByPieceValue() int {
 			case "king":
 				pieceValue = 10
 			}
-			if piece.Color == s.Turn.Color {
+			if piece.Color == b.Turn {
 				evaluation += pieceValue
 			} else {
 				evaluation += pieceValue * -1

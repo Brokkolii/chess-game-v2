@@ -37,3 +37,24 @@ func FieldInMoves(moves []*Move, field *Field) bool {
 	}
 	return false
 }
+
+func (m *Move) IsPawnAdvance() bool {
+	return m.From.Piece.Type == "pawn"
+}
+
+func (m *Move) IsCapture() bool {
+	return m.To.Piece != nil
+}
+
+func (m *Move) AllowsEnPassant() bool {
+	return m.From.Piece.Type == "pawn" && (m.From.Row-m.To.Row == -2 || m.From.Row-m.To.Row == 2)
+}
+
+func (m *Move) IsCastle() bool {
+	return m.From.Piece.Type == "king" && (m.From.Col-m.To.Col == -3 || m.From.Col-m.To.Col == 3)
+}
+
+func (m *Move) IsFullMove() bool {
+	// because white starts every a FullMove happens after blacks turn
+	return m.From.Piece.Color == "black"
+}
